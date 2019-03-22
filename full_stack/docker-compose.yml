@@ -56,7 +56,10 @@ services:
       elasticsearch: { condition: service_healthy }
     command: auditbeat -e -strict.perms=false
     pid: "host" # Set the required permissions with pid and cap_add for Auditbeat
+    # if you use linux kernel late 3.16, then
     cap_add: ['AUDIT_CONTROL', 'AUDIT_READ']
+    # if you use linux kernel before 3.16, then
+    # privileged: true
     networks: ['stack']
     restart: on-failure
 
@@ -107,51 +110,51 @@ services:
       elasticsearch: { condition: service_healthy }
 
   #Metricbeat container
-  metricbeat:
-    container_name: metricbeat
-    hostname: metricbeat
-    user: root #To read the docker socket
-    image: docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION}
-    volumes:
-      #Mount the metricbeat configuration so users can make edits.
-      - ./config/beats/metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
-      #Mount the modules.d directory into the container. This allows user to potentially make changes to the modules and they will be dynamically loaded.
-      - ./config/beats/metricbeat/modules.d/:/usr/share/metricbeat/modules.d/
-      #The commented sections below enable Metricbeat to monitor the Docker host rather than the Metricbeat container. These are used by the system module.
-      - /proc:/hostfs/proc:ro
-      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
-      #Allows us to report on docker from the hosts information.
-      - /var/run/docker.sock:/var/run/docker.sock
-      #We mount the host filesystem so we can report on disk usage with the system module.
-      - /:/hostfs:ro
-    command: metricbeat -e -system.hostfs=/hostfs -strict.perms=false
-    networks: ['stack']
-    restart: on-failure
-    environment:
-      - "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
-    depends_on:
-      elasticsearch:  { condition: service_healthy }
+  # metricbeat:
+  #   container_name: metricbeat
+  #   hostname: metricbeat
+  #   user: root #To read the docker socket
+  #   image: docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION}
+  #   volumes:
+  #     #Mount the metricbeat configuration so users can make edits.
+  #     - ./config/beats/metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
+  #     #Mount the modules.d directory into the container. This allows user to potentially make changes to the modules and they will be dynamically loaded.
+  #     - ./config/beats/metricbeat/modules.d/:/usr/share/metricbeat/modules.d/
+  #     #The commented sections below enable Metricbeat to monitor the Docker host rather than the Metricbeat container. These are used by the system module.
+  #     - /proc:/hostfs/proc:ro
+  #     - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+  #     #Allows us to report on docker from the hosts information.
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     #We mount the host filesystem so we can report on disk usage with the system module.
+  #     - /:/hostfs:ro
+  #   command: metricbeat -e -system.hostfs=/hostfs -strict.perms=false
+  #   networks: ['stack']
+  #   restart: on-failure
+  #   environment:
+  #     - "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
+  #   depends_on:
+  #     elasticsearch:  { condition: service_healthy }
 
   #Packetbeat container
-  packetbeat:
-    container_name: packetbeat
-    hostname: packetbeat
-    user: root #To read the docker socket
-    image: "docker.elastic.co/beats/packetbeat:${ELASTIC_VERSION}"
-    volumes:
-      #Mount the packetbeat configuration so users can make edits.
-      - ./config/beats/packetbeat/packetbeat.yml:/usr/share/packetbeat/packetbeat.yml
-      #Allows us to report on docker from the hosts information.
-      - /var/run/docker.sock:/var/run/docker.sock
-    # Packetbeat needs some elevated privileges to capture network traffic. We'll grant them with POSIX capabilities.
-    cap_add: ['NET_RAW', 'NET_ADMIN']
-    # Use "host mode" networking to allow Packetbeat to capture traffic from the real network interface on the host,
-    # rather than being isolated to the container's virtual interface.
-    network_mode: host
-    restart: on-failure
-    command: packetbeat -e -strict.perms=false
-    depends_on:
-      elasticsearch:  { condition: service_healthy }
+  # packetbeat:
+  #   container_name: packetbeat
+  #   hostname: packetbeat
+  #   user: root #To read the docker socket
+  #   image: "docker.elastic.co/beats/packetbeat:${ELASTIC_VERSION}"
+  #   volumes:
+  #     #Mount the packetbeat configuration so users can make edits.
+  #     - ./config/beats/packetbeat/packetbeat.yml:/usr/share/packetbeat/packetbeat.yml
+  #     #Allows us to report on docker from the hosts information.
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   # Packetbeat needs some elevated privileges to capture network traffic. We'll grant them with POSIX capabilities.
+  #   cap_add: ['NET_RAW', 'NET_ADMIN']
+  #   # Use "host mode" networking to allow Packetbeat to capture traffic from the real network interface on the host,
+  #   # rather than being isolated to the container's virtual interface.
+  #   network_mode: host
+  #   restart: on-failure
+  #   command: packetbeat -e -strict.perms=false
+  #   depends_on:
+  #     elasticsearch:  { condition: service_healthy }
 
   #nginx container
   nginx:
